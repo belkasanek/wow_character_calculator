@@ -1,2 +1,5 @@
 .ipynb_checkpoints
+# configuration file
 main.ini
+# dir which hold saved Character instances
+characters/
