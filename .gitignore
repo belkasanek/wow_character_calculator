@@ -1,4 +1,5 @@
 .ipynb_checkpoints
+__pycache__/
 # configuration file
 main.ini
 # dir which hold saved Character instances
