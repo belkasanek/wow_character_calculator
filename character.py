@@ -21,8 +21,8 @@ class Character:
 
         self.item_type_map = {'head': [1], 'neck': [2], 'shoulders': [3], 'chest': [4, 5, 20], 
                               'waist': [6], 'legs': [7], 'feet': [8], 'wrists': [9], 
-                              'hands': [10], 'finger': [11], 'trinket': [12], 
-                              'one-hand': [13, 21], 'shield': [14], 'ranged': [15], 
+                              'hands': [10], 'finger1': [11], 'finger2': [11], 'trinket1': [12], 
+                              'trinket2': [12], 'one-hand': [13, 21], 'shield': [14], 'ranged': [15], 
                               'back': [16], 'two_hand': [17], 'offhand': [22], 'thrown': [25], 
                               'gun': [26], 'bow': [15], 'left-hand': [22], 'relic': [28]}
 
@@ -231,6 +231,18 @@ class Character:
                 slot = key
                 break
         
+        # if one ring is equipped check another one
+        if (slot == 'finger1') and (self.items_on[slot] is not None) and (self.items_on['finger2'] is None):
+            slot = 'finger2'
+        elif (slot == 'finger2') and (self.items_on[slot] is not None) and (self.items_on['finger1'] is None):
+            slot = 'finger1'
+
+        # if one trinket is equipped check another one
+        if (slot == 'trinket1') and (self.items_on[slot] is not None) and (self.items_on['trinket2'] is None):
+            slot = 'trinket2'
+        elif (slot == 'trinket2') and (self.items_on[slot] is not None) and (self.items_on['trinket1'] is None):
+            slot = 'trinket1'
+        
         # check if character can wear it
         if (temp['AllowableClass'].values[0] == -1) or \
         (temp['AllowableClass'].values[0] == self.class_map[self.game_class]):
@@ -407,8 +419,8 @@ class Character:
                 raise KeyError('Invalid bonus name: {}'.format(stat))
 
         # leave default value for slot that doesn't have armor_type
-        if slot in ['neck', 'finger', 'trinket', 'one-hand', 'shield', 'ranged', 'back',
-                    'two_hand', 'offhand', 'thrown', 'gun', 'bow', 'left-hand', 'relic']:
+        if slot in ['neck', 'finger1', 'finger2', 'trinket1', 'trinket2', 'one-hand', 'shield', 'ranged', 
+                    'back', 'two_hand', 'offhand', 'thrown', 'gun', 'bow', 'left-hand', 'relic']:
             armor_type = ''
             
         if armor_type:
