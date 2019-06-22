@@ -46,6 +46,7 @@ class Character:
         
         self.damage_reverse_map = {0: 'physical', 1: 'holy', 2: 'fire', 3: 'nature', 
                                    4: 'frost', 5: 'shadow', 6: 'arcane'}
+        
         self.race_map = {'human': 1, 'orc': 2, 'dwarf': 3, 'elf': 4, 
                          'undead': 5, 'tauren': 6, 'gnome': 7, 'troll': 8}
 
@@ -140,20 +141,41 @@ class Character:
         self.melee_attack_power = 0
         self.range_attack_power = 0
         self.spell_power = 0
-        self.spell_holy_power = 0
-        self.spell_fire_power = 0
-        self.spell_nature_power = 0
-        self.spell_frost_power = 0
-        self.spell_shadow_power = 0
-        self.spell_arcane_power = 0
         self.healing_power = 0
         self.crit = 0
-        self.spell_crit = 0
-        self.dodge = 0
-        self.parry = 0
-        self.defence = 0
+        self.spell_crit = 0   
         self.mana_reg = 0
         self.hit_chance = 0
+
+        if self.race == 'elf':
+            self.dodge = 1
+        else:
+            self.dodge = 0
+        self.parry = 0
+        self.defence = 0
+        
+        self.spell_holy_power = 0
+        self.spell_fire_power = 0
+        
+        if self.race == 'undead':
+            self.spell_shadow_power = 10
+        else:
+            self.spell_shadow_power = 0
+        
+        if (self.race == 'tauren') or (self.race == 'elf'):
+            self.spell_nature_power = 10
+        else:
+            self.spell_nature_power = 0
+        
+        if self.race == 'dwarf':
+            self.spell_frost_power = 10
+        else:
+            self.spell_frost_power = 0
+        
+        if self.race == 'gnome':
+            self.spell_arcane_power = 10
+        else:
+            self.spell_arcane_power = 0
         
         self.calculate_stats()
         
@@ -168,7 +190,10 @@ class Character:
             raise KeyError('Invalid key: {}'.format(key))
     
     def calculate_stats(self):
-        self.hp = self.base_hp_mana['basehp'].values[0] + self.sta * 10 + self.bonus_hp
+        if self.race == 'tauren':
+            self.hp = self.base_hp_mana['basehp'].values[0] + self.sta * 10.5 + self.bonus_hp
+        else:
+            self.hp = self.base_hp_mana['basehp'].values[0] + self.sta * 10 + self.bonus_hp
         self.mana = self.base_hp_mana['basemana'].values[0] + self.inte * 15
         self.armor = self.agi * 2 + self.base_armor
         
@@ -278,9 +303,15 @@ class Character:
             elif stat_type == 4:
                 self.str = operator(self.str, value)
             elif stat_type == 5:
-                self.inte = operator(self.inte, value)
+                if self.race == 'gnome':
+                    self.inte = operator(self.inte, value * 1.05)
+                else:
+                    self.inte = operator(self.inte, value)
             elif stat_type == 6:
-                self.spi = operator(self.spi, value)
+                if self.race == 'human':
+                    self.spi = operator(self.spi, value * 1.05)
+                else:
+                    self.spi = operator(self.spi, value)
             elif stat_type == 7:
                 self.sta = operator(self.sta, value)  
                 
