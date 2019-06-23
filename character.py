@@ -3,6 +3,7 @@ import re
 import configparser
 import pickle
 from operator import iadd, isub
+from collections import OrderedDict
 
 import pandas as pd
 import numpy as np
@@ -118,10 +119,26 @@ class Character:
         # resist
         self.holy_res = 0
         self.fire_res = 0
-        self.nature_res = 0
-        self.frost_res = 0
-        self.shadow_res = 0
-        self.arcane_res = 0
+        
+        if self.race == 'undead':
+            self.shadow_res = 10
+        else:
+            self.shadow_res = 0
+        
+        if (self.race == 'tauren') or (self.race == 'elf'):
+            self.nature_res = 10
+        else:
+            self.nature_res = 0
+        
+        if self.race == 'dwarf':
+            self.frost_res = 10
+        else:
+            self.frost_res = 0
+        
+        if self.race == 'gnome':
+            self.arcane_res = 10
+        else:
+            self.arcane_res = 0
         
         # base values of stats
         self.bonus_hp = 0
@@ -156,26 +173,10 @@ class Character:
         
         self.spell_holy_power = 0
         self.spell_fire_power = 0
-        
-        if self.race == 'undead':
-            self.spell_shadow_power = 10
-        else:
-            self.spell_shadow_power = 0
-        
-        if (self.race == 'tauren') or (self.race == 'elf'):
-            self.spell_nature_power = 10
-        else:
-            self.spell_nature_power = 0
-        
-        if self.race == 'dwarf':
-            self.spell_frost_power = 10
-        else:
-            self.spell_frost_power = 0
-        
-        if self.race == 'gnome':
-            self.spell_arcane_power = 10
-        else:
-            self.spell_arcane_power = 0
+        self.spell_shadow_power = 0
+        self.spell_nature_power = 0
+        self.spell_frost_power = 0
+        self.spell_arcane_power = 0
         
         self.calculate_stats()
         
@@ -364,30 +365,40 @@ class Character:
         
         return empty
 
-    def summary(self):
-        return {'hp': self.hp, 'mana': self.mana, 'mana_reg': self.mana_reg, 
-                'stamina': self.sta, 'strength': self.str, 'intellect': self.inte, 
-                'agility': self.agi,'spirit': self.spi, 
-                'holy_resist': self.holy_res, 'fire_resist': self.fire_res, 
-                'nature_resist': self.nature_res, 'frost_resist': self.frost_res,
-                'shadow_resist': self.shadow_res, 'arcane_resist': self.arcane_res,
-                'max_magic_reduction': self.magical_damage_reduction(),
-                'armor': self.armor, 'physical_reduction': self.physical_damage_reduction(),
-                'melee_ap': self.melee_attack_power, 'range_ap': self.range_attack_power,
-                'sp': self.spell_power, 'holy_sp': self.spell_holy_power, 
-                'fire_sp': self.spell_fire_power, 'nature_sp': self.spell_nature_power,
-                'frost_sp': self.spell_frost_power, 'shadow_sp': self.spell_shadow_power,
-                'arcane_sp': self.spell_arcane_power, 'healing_power': self.healing_power,
-                'crit': self.crit, 'spell_crit': self.spell_crit,
-                'dodge': self.dodge, 'parry': self.parry, 'defence': self.defence,
-                'hit_chance': self.hit_chance}
+    def summary(self, resist=False):
+        orddict = OrderedDict()
+        
+        for key, value in zip(['hp', 'mana', 'mana_reg', 'stamina', 'strength', 'intellect', 'agility',
+                               'spirit', 'armor', 'physical_reduction', 'melee_ap', 'range_ap', 
+                               'spell_power', 'healing_power', 'crit', 'spell_crit', 'hit_chance',
+                               'dodge', 'parry', 'defence'],
+                              [self.hp, self.mana, self.mana_reg, self.sta, self.str, self.inte, self.agi,
+                               self.spi, self.armor, self.physical_damage_reduction(), self.melee_attack_power, 
+                               self.range_attack_power, self.spell_power, self.spell_holy_power, self.crit, 
+                               self.spell_crit, self.hit_chance, self.dodge, self.parry, self.defence]):
+            if key == 'physical_reduction':    
+                orddict[key] = round(value, 3)
+            else:
+                orddict[key] = round(value, 1)
+            
+        if resist:
+            for key, value in zip(['holy_res', 'fire_res', 'nature_res', 'frost_res', 'shadow_res', 'arcane_res'],
+                                  [self.holy_res, self.fire_res, self.nature_res, 
+                                   self.frost_res, self.shadow_res, self.arcane_res]):
+                orddict[key] = value            
+        
+        return orddict
 
     def physical_damage_reduction(self, attacker_level=60):
         return self.armor / (self.armor + (467.5 * attacker_level - 22167.5))        
 
-    def magical_damage_reduction(self, caster_level=60):
-        resist = max([self.holy_res, self.fire_res, self.nature_res, 
-                      self.frost_res, self.shadow_res, self.arcane_res])
+    def spell_resist_chance(self, school='', caster_level=60):
+        if school:
+            school = self.valid_key(school, self.resist_type)
+            resist = self.__getattribute__(school)
+        else:
+            resist = max([self.holy_res, self.fire_res, self.nature_res, 
+                          self.frost_res, self.shadow_res, self.arcane_res])
         return (resist / (5 * caster_level)) * 0.75
     
     def human_readable_df(self, df):
