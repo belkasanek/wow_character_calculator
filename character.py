@@ -275,7 +275,87 @@ class Character:
             pass
         else:
             raise KeyError('Can\'t be used by your class.')
+        
+        # sanity check for weapons 
+        if (slot == 'one-hand') or (slot == 'left-hand') or (slot == 'offhand') or (slot == 'shield'):
+            # if try to use one-hand weapon remove two-hand one
+            if self.items_on['two_hand'] is not None:
+                self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['two_hand']])
+                self.items_on['two_hand'] = None
+                
+            if slot == 'left-hand':
+                if self.items_on['offhand'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['offhand']])
+                    self.items_on['offhand'] = None 
+
+                if self.items_on['shield'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['shield']])
+                    self.items_on['shield'] = None 
+                    
+            elif slot == 'offhand':
+                if self.items_on['left-hand'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['left-hand']])
+                    self.items_on['left-hand'] = None 
+
+                if self.items_on['shield'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['shield']])
+                    self.items_on['shield'] = None                    
+                    
+            elif slot == 'shield':
+                if self.items_on['left-hand'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['left-hand']])
+                    self.items_on['left-hand'] = None 
+
+                if self.items_on['offhand'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['offhand']])
+                    self.items_on['offhand'] = None    
+                    
+        if (slot == 'ranged') or (slot == 'bow') or (slot == 'gun'):
+            if slot == 'ranged':
+                if self.items_on['bow'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['bow']])
+                    self.items_on['bow'] = None 
+
+                if self.items_on['gun'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['gun']])
+                    self.items_on['gun'] = None 
+                    
+            elif slot == 'bow':
+                if self.items_on['ranged'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['ranged']])
+                    self.items_on['ranged'] = None 
+
+                if self.items_on['gun'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['gun']])
+                    self.items_on['gun'] = None                    
+                    
+            elif slot == 'gun':
+                if self.items_on['ranged'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['ranged']])
+                    self.items_on['ranged'] = None 
+
+                if self.items_on['bow'] is not None:
+                    self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['bow']])
+                    self.items_on['bow'] = None    
             
+        # if try to use two-hand weapon remove all one-hand ones
+        elif slot == 'two_hand':
+            if self.items_on['one-hand'] is not None:
+                self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['one-hand']])
+                self.items_on['one-hand'] = None
+                
+            elif self.items_on['left-hand'] is not None:
+                self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['left-hand']])
+                self.items_on['left-hand'] = None
+                
+            elif self.items_on['offhand'] is not None:
+                self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['offhand']])
+                self.items_on['offhand'] = None 
+                
+            elif self.items_on['shield'] is not None:
+                self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on['shield']])
+                self.items_on['shield'] = None 
+                
         # remove old item
         if self.items_on[slot] is not None:
             self.add_remove_stats('sub', self.items.loc[self.items['id'] == self.items_on[slot]])
@@ -365,7 +445,7 @@ class Character:
         
         return empty
 
-    def summary(self, resist=False):
+    def summary(self, hide_resist=False):
         orddict = OrderedDict()
         
         for key, value in zip(['hp', 'mana', 'mana_reg', 'stamina', 'strength', 'intellect', 'agility',
@@ -381,7 +461,7 @@ class Character:
             else:
                 orddict[key] = round(value, 1)
             
-        if resist:
+        if hide_resist:
             for key, value in zip(['holy_res', 'fire_res', 'nature_res', 'frost_res', 'shadow_res', 'arcane_res'],
                                   [self.holy_res, self.fire_res, self.nature_res, 
                                    self.frost_res, self.shadow_res, self.arcane_res]):
@@ -451,7 +531,7 @@ class Character:
     
     def search(self, slot, armor_type='', quality='epic', 
                orderby=['armor'], asc=False, 
-               resist=False, additional_spell_power=False):
+               hide_resist=False, hide_additional_spell_power=False):
         slot = self.valid_key(slot, self.item_type_map)
         quality = self.valid_key(quality, self.item_quality_map)
         for stat in orderby:
@@ -481,12 +561,12 @@ class Character:
         temp = self.human_readable_df(temp).sort_values(orderby, ascending=asc)
         
         # to hide resist
-        if not resist:
+        if hide_resist:
             temp = temp.drop(['holy_res', 'fire_res', 'nature_res',
                               'frost_res', 'shadow_res', 'arcane_res'], axis=1)
         
         # to hide spell power for specific schools
-        if not additional_spell_power:
+        if hide_additional_spell_power:
             temp = temp.drop(['Increase Fire Dam', 'Increase Shadow Dam', 'Increase Nature Dam', 
                               'Increase Frost Dam', 'Increase Holy Dam', 'Increase Arcane Dam'], axis=1)
         
